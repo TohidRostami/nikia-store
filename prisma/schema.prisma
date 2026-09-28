@@ -1,0 +1,462 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+// =====================================================================
+// AUTH — shaped to match Better Auth's Prisma adapter expectations.
+// =====================================================================
+
+enum Role {
+  CUSTOMER
+  ADMIN
+  SUBADMIN
+}
+
+enum OrderSource {
+  ONLINE
+  IN_PERSON
+}
+
+model User {
+  id                  String   @id @default(cuid())
+  name                String
+  email               String   @unique
+  emailVerified       Boolean  @default(false)
+  phoneNumber         String?  @unique
+  phoneNumberVerified Boolean  @default(false)
+  image               String?
+  role                Role     @default(CUSTOMER)
+  // Optional profile details shown on the account page.
+  birthDate           DateTime?
+  usualSize           String?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  sessions  Session[]
+  accounts  Account[]
+  addresses Address[]
+  orders    Order[]
+  reviews   Review[]
+  wishlist  WishlistItem[]
+
+  @@index([role])
+  @@map("user")
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("session")
+}
+
+// Credential (email+password) and future OAuth accounts both live here,
+// matching Better Auth's convention — providerId "credential" for the
+// email/password flow.
+model Account {
+  id                    String    @id @default(cuid())
+  userId                String
+  accountId             String
+  providerId            String
+  password              String?
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Prevents one external account (e.g. a specific Google account) from
+  // being linked to more than one user record — Better Auth expects this.
+  @@unique([providerId, accountId])
+  @@index([userId])
+  @@map("account")
+}
+
+model Verification {
+  id         String   @id @default(cuid())
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier])
+  @@map("verification")
+}
+
+// Better Auth's database-backed rate limiter. On Vercel (serverless) the
+// default in-memory limiter is per-instance and therefore ineffective —
+// and every OTP request costs an SMS — so limits live in the database.
+model RateLimit {
+  id          String @id @default(cuid())
+  key         String @unique
+  count       Int
+  lastRequest BigInt
+
+  @@map("rate_limit")
+}
+
+// =====================================================================
+// CATALOG
+// =====================================================================
+
+model Category {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  title       String
+  description String?
+  image       String?
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  products Product[]
+
+  @@map("category")
+}
+
+model Product {
+  id              String   @id @default(cuid())
+  slug            String   @unique
+  name            String
+  description     String
+  // Fabric & care notes ("جنس و نگهداری") — optional, shown as its own
+  // accordion section on the product page.
+  materialCare    String?
+  price           Int
+  compareAtPrice  Int?
+  sku             String?  @unique
+  categoryId      String
+  isPublished     Boolean  @default(true)
+  isFeatured      Boolean  @default(false)
+  isNew           Boolean  @default(false)
+  // soft delete: a product with even one past order can't be hard-deleted
+  // (OrderItem references it) — it gets archived instead.
+  isArchived      Boolean  @default(false)
+  inStock         Boolean  @default(true)
+  metaTitle       String?
+  metaDescription String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  category   Category         @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  images     ProductImage[]
+  variants   ProductVariant[]
+  colors     Color[]
+  reviews    Review[]
+  orderItems OrderItem[]
+  wishlistedBy WishlistItem[]
+
+  @@index([categoryId])
+  @@index([isPublished, isFeatured])
+  @@index([isPublished, inStock])
+  @@index([createdAt])
+  @@map("product")
+}
+
+// A product's colors are entered fresh on that product's own form (no
+// shared cross-product palette, unlike Size) — so this is scoped to one
+// product and cascade-deletes with it, the same as ProductImage.
+model Color {
+  id        String   @id @default(cuid())
+  productId String
+  name      String
+  hexValue  String?
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+
+  product  Product          @relation(fields: [productId], references: [id], onDelete: Cascade)
+  variants ProductVariant[]
+  images   ProductImage[]
+
+  // Same product can't have two colors with the same name (e.g. admin
+  // accidentally typing "قرمز" twice).
+  @@unique([productId, name])
+  @@index([productId])
+  @@map("color")
+}
+
+// Each image belongs to at most one color (colorId is null only for
+// legacy/generic images not tied to a specific color) — the storefront
+// filters this list by the selected color to swap photos.
+model ProductImage {
+  id        String  @id @default(cuid())
+  productId String
+  colorId   String?
+  url       String
+  alt       String?
+  sortOrder Int     @default(0)
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  color   Color?  @relation(fields: [colorId], references: [id], onDelete: SetNull)
+
+  @@index([productId])
+  @@index([colorId])
+  @@map("product_image")
+}
+
+model ProductVariant {
+  id        String  @id @default(cuid())
+  productId String
+  sizeId    String?
+  colorId   String?
+  stock     Int     @default(0)
+  sku       String? @unique
+  // optimistic locking: stock decrements should use WHERE version = X so
+  // concurrent checkouts can't oversell the same unit.
+  version   Int     @default(0)
+
+  product    Product     @relation(fields: [productId], references: [id], onDelete: Cascade)
+  size       Size?       @relation(fields: [sizeId], references: [id], onDelete: SetNull)
+  color      Color?      @relation(fields: [colorId], references: [id], onDelete: SetNull)
+  orderItems OrderItem[]
+
+  // One row per (color, size) combo per product — no duplicate stock
+  // entries for the same combination.
+  @@unique([productId, sizeId, colorId])
+  @@index([productId])
+  @@index([sizeId])
+  @@index([colorId])
+  @@map("product_variant")
+}
+
+// Sizes are store-wide and admin-managed (see /admin/sizes) — created once,
+// then reusable across any future product, since different garment types
+// need different size sets (S/M/L for shirts, 38-46 for shoes, etc).
+// Colors, unlike sizes, are NOT shared this way — see the Color model.
+model Size {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+
+  variants ProductVariant[]
+
+  @@map("size")
+}
+
+model Review {
+  id         String   @id @default(cuid())
+  productId  String
+  userId     String
+  rating     Int
+  comment    String?
+  isApproved Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+  @@index([productId])
+  @@index([userId])
+  @@map("review")
+}
+
+model WishlistItem {
+  id        String   @id @default(cuid())
+  userId    String
+  productId String
+  createdAt DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+  @@index([userId])
+  @@map("wishlist_item")
+}
+
+// =====================================================================
+// AUDIENCE — newsletter sign-ups and contact-form messages
+// =====================================================================
+
+// `contact` is either an email address or a mobile number, normalized
+// (see lib/audience.ts) — the storefront form accepts both.
+model NewsletterSubscriber {
+  id        String   @id @default(cuid())
+  contact   String   @unique
+  createdAt DateTime @default(now())
+
+  @@map("newsletter_subscriber")
+}
+
+model ContactMessage {
+  id        String   @id @default(cuid())
+  name      String
+  phone     String
+  subject   String
+  message   String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([isRead, createdAt])
+  @@map("contact_message")
+}
+
+// =====================================================================
+// ORDERS & CHECKOUT
+// =====================================================================
+
+model Address {
+  id          String   @id @default(cuid())
+  userId      String
+  fullName    String
+  phone       String
+  province    String
+  city        String
+  addressLine String
+  postalCode  String
+  isDefault   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  orders Order[]
+
+  @@index([userId])
+  @@map("address")
+}
+
+enum OrderStatus {
+  PENDING_PAYMENT
+  PAID
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+  REFUNDED
+}
+
+// paymentRef / gateway fields stay generic on purpose — this is the seam
+// where the real payment gateway plugs in later (see lib/payment/).
+model Order {
+  id             String      @id @default(cuid())
+  orderNumber    String      @unique
+  // خرید حضوری نه حساب کاربری دارد نه آدرس ارسال — هردو اختیاری شدند.
+  userId         String?
+  addressId      String?
+  source         OrderSource @default(ONLINE)
+  // فقط وقتی پر می‌شود که userId خالی باشد — نام مشتری حضوری که حساب
+  // کاربری ندارد، فقط برای همین فاکتور، بدون ساخت اکانت.
+  walkInCustomerName String?
+  status         OrderStatus @default(PENDING_PAYMENT)
+  subtotal       Int
+  discountAmount Int         @default(0)
+  shippingCost   Int         @default(0)
+  total          Int
+  discountCodeId String?
+  // Gateway "authority"/token issued when the payment starts — how the
+  // callback finds the order again. `paymentRefId` is the bank's final
+  // reference number, stored only after a successful verification.
+  gatewayRef     String?
+  paymentRefId   String?
+  paidAt         DateTime?
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  user         User?         @relation(fields: [userId], references: [id], onDelete: Restrict)
+  address      Address?      @relation(fields: [addressId], references: [id], onDelete: Restrict)
+  discountCode DiscountCode? @relation(fields: [discountCodeId], references: [id], onDelete: SetNull)
+  items        OrderItem[]
+
+  @@index([userId])
+  @@index([status, createdAt])
+  @@index([source])
+  @@index([gatewayRef])
+  @@map("order")
+}
+
+model OrderItem {
+  id        String  @id @default(cuid())
+  orderId   String
+  productId String
+  variantId String?
+  name      String
+  size      String?
+  // Snapshot of the color name at purchase time — same reasoning as
+  // `size` above: survives even if the color is later renamed/removed.
+  color     String?
+  price     Int
+  quantity  Int
+
+  order   Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product         @relation(fields: [productId], references: [id], onDelete: Restrict)
+  variant ProductVariant? @relation(fields: [variantId], references: [id], onDelete: SetNull)
+
+  @@index([orderId])
+  @@index([productId])
+  @@index([variantId])
+  @@map("order_item")
+}
+
+enum DiscountType {
+  PERCENTAGE
+  FIXED
+}
+
+model DiscountCode {
+  id            String       @id @default(cuid())
+  code          String       @unique
+  type          DiscountType
+  value         Int
+  maxUses       Int?
+  usedCount     Int          @default(0)
+  minOrderTotal Int?
+  expiresAt     DateTime?
+  isActive      Boolean      @default(true)
+  createdAt     DateTime     @default(now())
+
+  orders Order[]
+
+  @@index([isActive])
+  @@map("discount_code")
+}
+
+// =====================================================================
+// SITE OPERATIONAL SETTINGS — admin-toggleable, distinct from the
+// developer-facing content/site-config.json (see lib/content.ts).
+// =====================================================================
+
+model SiteSetting {
+  id                    String   @id @default("singleton")
+  emailLoginEnabled     Boolean  @default(true)
+  smsLoginEnabled       Boolean  @default(true)
+  freeShippingThreshold Int?
+  standardShippingCost  Int      @default(0)
+  updatedAt             DateTime @updatedAt
+
+  @@map("site_setting")
+}
+
+// Multiple hero images so the homepage banner can rotate — admin-managed
+// from /admin/settings, independent of any single product or category.
+model HeroImage {
+  id        String   @id @default(cuid())
+  url       String
+  isActive  Boolean  @default(true)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@map("hero_image")
+}

@@ -1,0 +1,219 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  --radius: 0.5rem;
+
+  /* Self-hosted through @fontsource (see app/layout.tsx) — no runtime
+     dependency on the Google Fonts CDN, which is unreliable for visitors
+     in Iran and blocked by the CSP anyway. */
+  --font-estedad: "Estedad Variable", "Vazirmatn Variable", Tahoma, ui-sans-serif, system-ui, sans-serif;
+
+  /* ---- نیکیا brand palette (source of truth) ----
+     Keep in sync with theme.colors in content/site-config.json. */
+  --brand-ink: #161412; /* text, buttons */
+  --brand-paper: #faf8f5; /* page background */
+  --brand-sand: #f2ede6; /* hero / soft panels */
+  --brand-sand-2: #ede6dc; /* promo cards */
+  --brand-sand-3: #e4dcd0; /* image placeholders, deeper panels */
+  --brand-line: #d8d0c4; /* input borders */
+  --brand-hairline: #ece6dd; /* dividers */
+  --brand-muted: #7a6f63; /* secondary text */
+  --brand-body: #5e554b; /* paragraph text */
+  --brand-sale: #8a3b2e; /* discount badge / errors */
+  --brand-success: #3c5230;
+  --brand-success-bg: #e4ebdd;
+
+  --background: var(--brand-paper);
+  --foreground: var(--brand-ink);
+
+  --card: #ffffff;
+  --card-foreground: var(--brand-ink);
+
+  --popover: #ffffff;
+  --popover-foreground: var(--brand-ink);
+
+  --primary: var(--brand-ink);
+  --primary-foreground: var(--brand-paper);
+
+  --secondary: var(--brand-sand);
+  --secondary-foreground: var(--brand-ink);
+
+  --muted: var(--brand-sand);
+  --muted-foreground: var(--brand-muted);
+
+  --accent: var(--brand-sand-2);
+  --accent-foreground: var(--brand-ink);
+
+  /* Cool accent, taken from the denim swatch — used by the admin panel's
+     status chips. */
+  --accent-2: #5b6b80;
+  --accent-2-foreground: var(--brand-paper);
+
+  --destructive: var(--brand-sale);
+  --destructive-foreground: var(--brand-paper);
+
+  --success: var(--brand-success);
+  --success-foreground: var(--brand-paper);
+
+  --border: var(--brand-hairline);
+  --input: var(--brand-line);
+  --ring: var(--brand-ink);
+
+  --chart-1: var(--brand-ink);
+  --chart-2: #8c6a4f;
+  --chart-3: #5b6b80;
+  --chart-4: #d9cbb5;
+  --chart-5: #8da0b8;
+
+  --sidebar: var(--brand-ink);
+  --sidebar-foreground: var(--brand-paper);
+  --sidebar-primary: var(--brand-paper);
+  --sidebar-primary-foreground: var(--brand-ink);
+  --sidebar-accent: color-mix(in srgb, var(--brand-paper) 12%, var(--brand-ink));
+  --sidebar-accent-foreground: var(--brand-paper);
+  --sidebar-border: color-mix(in srgb, var(--brand-paper) 14%, var(--brand-ink));
+  --sidebar-ring: var(--brand-line);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent-2: var(--accent-2);
+  --color-accent-2-foreground: var(--accent-2-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-ink: var(--brand-ink);
+  --color-paper: var(--brand-paper);
+  --color-sand: var(--brand-sand);
+  --color-sand-2: var(--brand-sand-2);
+  --color-sand-3: var(--brand-sand-3);
+  --color-line: var(--brand-line);
+  --color-hairline: var(--brand-hairline);
+  --color-body: var(--brand-body);
+  --color-sale: var(--brand-sale);
+  --color-success-bg: var(--brand-success-bg);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  --font-sans: var(--font-estedad);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 2px);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    @apply scroll-smooth;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "ss01";
+  }
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+  ::selection {
+    background: var(--brand-sand-3);
+  }
+  :focus-visible {
+    outline: 2px solid var(--brand-ink);
+    outline-offset: 2px;
+  }
+  /* Codes, order numbers and other LTR tokens inside RTL text. */
+  .font-nums {
+    font-variant-numeric: tabular-nums;
+    direction: ltr;
+    unicode-bidi: isolate;
+  }
+}
+
+@layer components {
+  /* The page's content column — same width and gutters everywhere. */
+  .wrap {
+    @apply mx-auto w-full max-w-[1320px] px-4 sm:px-6 lg:px-10;
+  }
+}
+
+/* Horizontal scroll areas (category strip, size chips) without a visible bar. */
+.no-scrollbar {
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* The one orchestrated moment on the storefront: the hero copy rises in
+   once on load. Everything else is motion in response to a click. */
+@keyframes nikia-rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.hero-rise > * {
+  animation: nikia-rise 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+.hero-rise > *:nth-child(2) {
+  animation-delay: 0.08s;
+}
+.hero-rise > *:nth-child(3) {
+  animation-delay: 0.16s;
+}
+.hero-rise > *:nth-child(4) {
+  animation-delay: 0.24s;
+}
+.hero-rise > *:nth-child(5) {
+  animation-delay: 0.32s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
