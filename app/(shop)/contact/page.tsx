@@ -47,9 +47,9 @@ export default function ContactPage() {
             </div>
           ))}
         </dl>
-        <div className="min-w-0 flex-[1.4_1_420px] rounded-lg border border-hairline bg-white p-[clamp(20px,3vw,36px)]">
+        {/* <div className="min-w-0 flex-[1.4_1_420px] rounded-lg border border-hairline bg-white p-[clamp(20px,3vw,36px)]">
           <ContactForm subjects={c.subjects} sentTitle={c.sentTitle} sentText={c.sentText} />
-        </div>
+        </div> */}
       </section>
     </>
   );

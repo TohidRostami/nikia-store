@@ -12,7 +12,7 @@ export function NewsletterSection({
 }) {
   return (
     <section className="wrap pt-4">
-      <div className="flex flex-wrap overflow-hidden rounded-lg bg-sand-2">
+      <div className="flex flex-wrap overflow-hidden rounded-lg bg-sand-2 shadow-lg">
         <div className="relative min-h-[260px] flex-[1_1_300px]">
           <Image
             src={"/about-us.webp"}

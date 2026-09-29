@@ -29,7 +29,7 @@ export function PromoBanners({
         return (
           <div
             key={promo.eyebrow}
-            className={`flex min-h-[260px] overflow-hidden rounded-lg ${i === 0 ? "bg-sand-2" : "bg-sand-3"}`}
+            className={`flex min-h-[260px] overflow-hidden rounded-lg shadow-lg ${i === 0 ? "bg-sand-2" : "bg-sand-3"}`}
           >
             <div className="flex flex-[1.2] flex-col justify-center gap-3 p-[clamp(24px,3vw,40px)]">
               <span className="text-[11px] text-muted-foreground">

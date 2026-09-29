@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   ArrowLeft,
-  Heart,
+  LayoutDashboard,
   Menu,
   Search,
   ShoppingBag,
@@ -68,6 +68,9 @@ export function SiteHeaderClient({
   const beforeCategories =
     shopIndex === -1 ? links : links.slice(0, shopIndex + 1);
   const afterCategories = shopIndex === -1 ? [] : links.slice(shopIndex + 1);
+
+  const role = (session?.user as { role?: string } | undefined)?.role;
+  const isStaff = role === "ADMIN" || role === "SUBADMIN";
 
   const renderDesktopLink = (l: NavLink) => {
     const active = isActive(pathname, l.href);
@@ -148,6 +151,16 @@ export function SiteHeaderClient({
           >
             <User className="size-5" strokeWidth={1.5} />
           </Link>
+          {isStaff && (
+            <Link
+              href="/admin"
+              aria-label="پنل مدیریت"
+              title="پنل مدیریت"
+              className="hidden sm:flex relative size-11 items-center justify-center transition-colors hover:text-muted-foreground"
+            >
+              <LayoutDashboard className="size-5" strokeWidth={1.5} />
+            </Link>
+          )}
           <Link href="/cart" aria-label="سبد خرید" className={iconBtn}>
             <ShoppingBag className="size-5" strokeWidth={1.5} />
             {hydrated && cartCount > 0 && (
@@ -191,16 +204,27 @@ export function SiteHeaderClient({
           </nav>
 
           {/* Account */}
-          <div className="shrink-0 border-t border-hairline px-5 py-4">
+          <div className="flex flex-col shrink-0 border-t border-hairline px-5 py-4 gap-1">
             <Link
               href={session ? "/account" : "/login"}
               onClick={() => setMenuOpen(false)}
               aria-label={session ? "حساب کاربری" : "ورود یا ثبت‌نام"}
-              className="flex w-full items-center justify-center  gap-1 border border-hairline rounded-full py-2 text-base transition-colors hover:text-muted-foreground"
+              className="flex w-full items-center justify-start gap-3 border border-hairline rounded-full py-2 pr-4 text-base transition-colors hover:text-muted-foreground"
             >
               <User className="size-5" strokeWidth={1.5} />
-              <span>ورود به حساب کاربری</span>
+              <span>{session ? "حساب کاربری من" : "ورود به حساب کاربری"}</span>
             </Link>
+            {isStaff && (
+              <Link
+                href="/admin"
+                onClick={() => setMenuOpen(false)}
+                aria-label="ورود به پنل ادمین"
+                className="flex w-full items-center justify-start gap-3 border border-hairline rounded-full py-2 pr-4 text-base transition-colors hover:text-muted-foreground"
+              >
+                <LayoutDashboard className="size-4" strokeWidth={1.5} />
+                <span>پنل مدیریت</span>
+              </Link>
+            )}
           </div>
         </SheetContent>
       </Sheet>

@@ -82,6 +82,13 @@ export async function ShopView({
     params.colors.length > 0 ||
     params.price !== "all";
 
+  const hasSubFilters =
+    params.sale ||
+    params.sizes.length > 0 ||
+    params.colors.length > 0 ||
+    params.price !== "all" ||
+    Boolean(params.q);
+
   return (
     <>
       <section className="bg-sand mx-2 rounded-xl">
@@ -207,10 +214,7 @@ export async function ShopView({
               />
             </MobileFilters>
 
-            <PerPageSelect
-              value={result.perPage}
-              categorySlug={slug ?? undefined}
-            />
+            <PerPageSelect value={result.perPage} hrefs={perPageHrefs} />
           </div>
         </div>
 
@@ -237,7 +241,9 @@ export async function ShopView({
                 description="فیلترها را کم کنید یا عبارت جستجو را تغییر دهید."
                 actionLabel="حذف فیلترها"
                 actionHref={
-                  category ? `/products/category/${category.slug}` : "/products"
+                  category && hasSubFilters
+                    ? `/products/category/${category.slug}`
+                    : "/products"
                 }
               />
             )}

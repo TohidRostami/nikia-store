@@ -22,7 +22,7 @@ export function FeaturedProducts({
         linkLabel="همه محصولات"
       />
       <div
-        className="grid gap-[clamp(12px,2vw,30px)] [grid-template-columns:repeat(auto-fill,minmax(150px,1fr))] lg:[grid-template-columns:repeat(auto-fill,minmax(230px,1fr))]"
+        className="grid gap-[clamp(12px,2vw,30px)] [grid-template-columns:repeat(auto-fill,minmax(150px,1fr))] md:[grid-template-columns:repeat(auto-fill,minmax(210px,1fr))] lg:[grid-template-columns:repeat(auto-fill,minmax(230px,1fr))]"
       >
         {products.slice(0,4).map((p, i) => (
           // The first row is above the fold on most screens — load its images eagerly.
