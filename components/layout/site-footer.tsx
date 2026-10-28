@@ -5,14 +5,15 @@ import { Logo } from "@/components/shared/logo";
 import { NewsletterForm } from "@/components/layout/newsletter-form";
 import { siteConfig } from "@/lib/content";
 import { toPersianDigits } from "@/lib/format";
-
+import { FaWhatsapp, FaInstagram, FaTelegram } from "react-icons/fa";
 export function SiteFooter() {
   const year = toJalaali(new Date()).jy;
   const { contact, social, nav } = siteConfig;
 
   const socialLinks = [
-    { href: social.instagram, label: "اینستاگرام", Icon: InstagramIcon },
-    { href: social.telegram, label: "تلگرام", Icon: TelegramIcon },
+    { href: social.instagram, label: "اینستاگرام", Icon: FaInstagram },
+    { href: social.telegram, label: "تلگرام", Icon: FaTelegram },
+    { href: social.telegram, label: "تلگرام", Icon: FaWhatsapp },
   ].filter((s) => s.href);
 
   return (

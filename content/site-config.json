@@ -42,7 +42,8 @@
   },
   "social": {
     "instagram": "https://instagram.com/nikia",
-    "telegram": "https://t.me/nikia"
+    "telegram": "https://t.me/nikia",
+    "whatsapp": "989128838364"
   },
   "nav": {
     "main": [
@@ -194,8 +195,8 @@
       },
       {
         "icon": "box",
-        "title": "بازگشت آسان",
-        "description": "۷ روز ضمانت بازگشت"
+        "title": "ارسال فوری",
+        "description": "ارسال در کمتر از 24 ساعت"
       },
       {
         "icon": "shield",

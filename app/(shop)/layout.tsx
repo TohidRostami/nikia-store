@@ -3,6 +3,7 @@ import { SiteHeader } from "@/components/layout/site-header";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { RouteTransitionProvider } from "@/components/shared/route-transition-provider";
 import { WishlistProvider } from "@/components/shared/wishlist-provider";
+import { WhatsAppButton } from "@/components/home/whatsapp-questionbox";
 
 // Every storefront page reads the catalog or the session, so none of it is
 // built at deploy time — that keeps `next build` independent of the database.
@@ -15,7 +16,10 @@ export default function ShopLayout({ children }: { children: ReactNode }) {
       <div className="flex min-h-screen flex-col">
         <SiteHeader />
         <main className="flex-1">
-          <RouteTransitionProvider>{children}</RouteTransitionProvider>
+          <RouteTransitionProvider>
+            <WhatsAppButton />
+            {children}
+          </RouteTransitionProvider>
         </main>
         <SiteFooter />
       </div>

@@ -2,13 +2,24 @@ import Link from "next/link";
 import type { TextSection } from "@/lib/content";
 
 /** A text page (policies) built from config sections; each section id is an anchor (#shipping, #returns…). */
-export function LegalPage({ title, sections }: { title: string; sections: TextSection[] }) {
+export function LegalPage({
+  title,
+  sections,
+}: {
+  title: string;
+  sections: TextSection[];
+}) {
   return (
     <>
-      <section className="bg-sand">
+      <section className="bg-sand mx-2 rounded-xl">
         <div className="wrap flex flex-col gap-2.5 py-[clamp(28px,4vw,48px)]">
-          <nav aria-label="مسیر" className="flex gap-2 text-xs text-muted-foreground">
-            <Link href="/" className="hover:text-ink">خانه</Link>
+          <nav
+            aria-label="مسیر"
+            className="flex gap-2 text-xs text-muted-foreground"
+          >
+            <Link href="/" className="hover:text-ink">
+              خانه
+            </Link>
             <span aria-hidden="true">/</span>
             <span className="text-ink">{title}</span>
           </nav>
@@ -21,7 +32,10 @@ export function LegalPage({ title, sections }: { title: string; sections: TextSe
             <h2 className="mb-4 text-xl font-medium">{s.title}</h2>
             <div className="flex flex-col gap-3">
               {s.paragraphs.map((p) => (
-                <p key={p} className="text-[15px] leading-[2.2] text-body [text-wrap:pretty]">
+                <p
+                  key={p}
+                  className="text-[15px] leading-[2.2] text-body [text-wrap:pretty]"
+                >
                   {p}
                 </p>
               ))}
