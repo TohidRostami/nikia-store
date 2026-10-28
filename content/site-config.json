@@ -31,19 +31,20 @@
   },
   "contact": {
     "phone": "۰۲۱-۸۸۰۰۰۰۰۰",
-    "phoneHref": "tel:+982188000000",
-    "mobile": "۰۹۱۲۰۰۰۰۰۰۰",
-    "whatsappHref": "https://wa.me/989120000000",
+    "phoneHref": "tel:+989128838364",
+    "mobile": "۰۹۱۲۸۸۳۸۳۶۴",
+    "whatsappHref": "https://wa.me/989128838364",
     "email": "hello@nikia.ir",
-    "address": "تهران، خیابان ولیعصر، بالاتر از پارک ساعی، پلاک ۲۴۰",
-    "shortAddress": "تهران، خیابان ولیعصر",
+    "address": "قائمشهر، خیابان کارگر، مجتمع دریای نور",
+    "shortAddress": "قائمشهر، خیابان کارگر",
+    "mapUrl":"https://maps.app.goo.gl/dHDEofucdJEbAVgx9",
     "supportHours": "همه روزه ۹ تا ۲۱",
     "showroomHours": "شنبه تا پنجشنبه، ۱۰ تا ۲۰"
   },
   "social": {
     "instagram": "https://instagram.com/nikia",
     "telegram": "https://t.me/nikia",
-    "whatsapp": "989128838364"
+    "whatsapp": "۹۸۹۱۲۸۸۳۸۳۶۴"
   },
   "nav": {
     "main": [
