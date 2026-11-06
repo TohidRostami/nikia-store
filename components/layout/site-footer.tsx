@@ -13,7 +13,7 @@ export function SiteFooter() {
   const socialLinks = [
     { href: social.instagram, label: "اینستاگرام", Icon: FaInstagram },
     { href: social.telegram, label: "تلگرام", Icon: FaTelegram },
-    { href: social.telegram, label: "تلگرام", Icon: FaWhatsapp },
+    { href: social.whatsapp, label: "واتساپ", Icon: FaWhatsapp },
   ].filter((s) => s.href);
 
   return (

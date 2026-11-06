@@ -4,12 +4,13 @@ import { fillTemplate, siteConfig } from "@/lib/content";
 import {
   ArrowRightIcon,
   Clock,
-  Mail,
+  CircleUserRound,
   MapPin,
   Navigation,
   Phone,
 } from "lucide-react";
-
+import { FaInstagram, FaTelegram, FaWhatsapp } from "react-icons/fa";
+const { social } = siteConfig;
 const c = siteConfig.contactPage;
 const info = siteConfig.contact;
 
@@ -24,15 +25,9 @@ export default function ContactPage() {
   const ROWS = [
     {
       icon: Phone,
-      label: "تلفن",
+      label: "شماره تماس",
       value: siteConfig.contact.phone,
       href: `tel:${siteConfig.contact.phone}`,
-    },
-    {
-      icon: Mail,
-      label: "ایمیل",
-      value: siteConfig.contact.email,
-      href: `mailto:${siteConfig.contact.email}`,
     },
     { icon: MapPin, label: "آدرس", value: siteConfig.contact.address },
     {
@@ -48,6 +43,11 @@ export default function ContactPage() {
       value: siteConfig.contact.supportHours,
     },
   ];
+  const socialLinks = [
+    { href: social.instagram, label: "اینستاگرام", Icon: FaInstagram },
+    { href: social.telegram, label: "تلگرام", Icon: FaTelegram },
+    { href: social.whatsapp, label: "تلگرام", Icon: FaWhatsapp },
+  ].filter((s) => s.href);
   return (
     <>
       <section className="wrap flex flex-col gap-3.5 py-[clamp(40px,6vw,80px)]">
@@ -85,10 +85,31 @@ export default function ContactPage() {
               </div>
             </div>
           ))}
+          <div className="flex items-center gap-4 py-5">
+            <CircleUserRound
+              className="size-5 shrink-0 text-black"
+              strokeWidth={1.6}
+            />
+            <div>
+              <p className="text-xs text-muted-foreground">
+                با ما در ارتباط باشید در
+              </p>
+              <div className="flex gap-2.5">
+                {socialLinks.map(({ href, label, Icon }) => (
+                  <a
+                    href={href}
+                    dir="ltr"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-foreground hover:underline p-2"
+                  >
+                    <Icon className="size-6" />
+                  </a>
+                ))}
+              </div>
+            </div>
+          </div>
         </dl>
-        {/* <div className="min-w-0 flex-[1.4_1_420px] rounded-lg border border-hairline bg-white p-[clamp(20px,3vw,36px)]">
-          <ContactForm subjects={c.subjects} sentTitle={c.sentTitle} sentText={c.sentText} />
-        </div> */}
       </section>
     </>
   );

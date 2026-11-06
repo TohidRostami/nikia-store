@@ -30,21 +30,21 @@
     "radius": "0.5rem"
   },
   "contact": {
-    "phone": "۰۲۱-۸۸۰۰۰۰۰۰",
+    "phone": "۰۹۱۲۸۸۳۸۳۶۴",
     "phoneHref": "tel:+989128838364",
     "mobile": "۰۹۱۲۸۸۳۸۳۶۴",
     "whatsappHref": "https://wa.me/989128838364",
     "email": "hello@nikia.ir",
-    "address": "قائمشهر، خیابان کارگر، مجتمع دریای نور",
-    "shortAddress": "قائمشهر، خیابان کارگر",
-    "mapUrl":"https://maps.app.goo.gl/dHDEofucdJEbAVgx9",
-    "supportHours": "همه روزه ۹ تا ۲۱",
+    "address": "قائمشهر، خیابان کارگر(خیابان ساری)، مجتمع دریای نور، طبقه اول ، واحد ۱۱۱",
+    "shortAddress": "قائمشهر، مجتمع دریای نور",
+    "mapUrl": "https://maps.app.goo.gl/dHDEofucdJEbAVgx9",
+    "supportHours": "همه روزه از ۱۰ تا ۲۴",
     "showroomHours": "شنبه تا پنجشنبه، ۱۰ تا ۲۰"
   },
   "social": {
-    "instagram": "https://instagram.com/nikia",
-    "telegram": "https://t.me/nikia",
-    "whatsapp": "۹۸۹۱۲۸۸۳۸۳۶۴"
+    "instagram": "https://instagram.com/nikia_collection",
+    "telegram": "https://t.me/+989128838364",
+    "whatsapp": "https://wa.me/989128838364"
   },
   "nav": {
     "main": [
