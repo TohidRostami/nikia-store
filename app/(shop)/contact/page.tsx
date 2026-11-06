@@ -21,67 +21,6 @@ export const metadata: Metadata = {
 };
 
 export default function ContactPage() {
-  const rows: { label: string; content: React.ReactNode }[] = [
-    {
-      label: "تلفن پشتیبانی",
-      content: (
-        <a href={info.phoneHref} className="hover:text-muted-foreground">
-          {info.phone}
-        </a>
-      ),
-    },
-    {
-      label: "واتساپ و تلگرام",
-      content: (
-        <a
-          href={info.whatsappHref}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="hover:text-muted-foreground"
-        >
-          {info.mobile}
-        </a>
-      ),
-    },
-    {
-      label: "ایمیل",
-      content: (
-        <a
-          href={`mailto:${info.email}`}
-          dir="ltr"
-          className="hover:text-muted-foreground"
-        >
-          {info.email}
-        </a>
-      ),
-    },
-    {
-      label: "لوکیشن",
-      content: (
-        <a
-          href={"https://maps.app.goo.gl/dHDEofucdJEbAVgx9"}
-          target="_blank"
-          dir="ltr"
-          className="hover:text-muted-foreground"
-        >
-          <ArrowRightIcon />
-          لوکیشن
-        </a>
-      ),
-    },
-    {
-      label: "شوروم",
-      content: (
-        <span>
-          {info.address}
-          <br />
-          <span className="text-xs text-muted-foreground">
-            {info.showroomHours}
-          </span>
-        </span>
-      ),
-    },
-  ];
   const ROWS = [
     {
       icon: Phone,

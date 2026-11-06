@@ -1,0 +1,38 @@
+/*
+ * The track holds two identical halves. Sliding it by exactly one half and
+ * restarting is invisible, which is what makes the loop seamless.
+ *
+ * Direction: the track moves to the right, mirroring Persian reading order
+ * (the start of the sentence — where the logo is — enters first). For the
+ * opposite direction, swap `from` and `to`.
+ */
+@keyframes slide {
+  from {
+    transform: translateX(-50%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+.track {
+  animation: slide var(--marquee-duration, 60s) linear infinite;
+  will-change: transform;
+}
+
+/* Let people read it / click it. Hover only on devices that really hover —
+   on touch screens a tap would otherwise leave the banner frozen. */
+@media (hover: hover) {
+  .root:hover .track {
+    animation-play-state: paused;
+  }
+}
+.root:focus-within .track {
+  animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .track {
+    animation: none;
+  }
+}

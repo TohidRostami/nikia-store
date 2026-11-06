@@ -11,6 +11,7 @@ import { formatToman } from "@/lib/format";
 import { getHeroImages } from "@/lib/queries/hero-images";
 import { getCategoriesCached, getHomeData } from "@/lib/queries/products";
 import { getSiteSettingsCached } from "@/lib/queries/settings";
+import { MarqueeBanner } from "@/components/home/marquee-banner";
 
 export default async function HomePage() {
   const [home, categories, heroImages, settings] = await Promise.all([
@@ -35,19 +36,20 @@ export default async function HomePage() {
     <>
       <HeroSection hero={content.hero} images={heroImages} />
       <CategoryStrip categories={categories} />
+      <MarqueeBanner />
       <FeaturedProducts
         eyebrow={content.featuredEyebrow}
         title={content.featuredTitle}
         products={home.featured.length > 0 ? home.featured : home.newArrivals}
       />
 
-      <PromoBanners
+      {/* <PromoBanners
         promos={content.promos}
         saleProduct={home.saleProduct}
         newArrivals={home.newArrivals}
-      />
+      /> */}
       <ServiceBar badges={resolveBadges(content.serviceBar, badgeOptions)} />
-      <NewsletterSection content={content.newsletter} />
+      {/* <NewsletterSection content={content.newsletter} /> */}
     </>
   );
 }
