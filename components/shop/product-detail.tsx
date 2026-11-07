@@ -7,6 +7,7 @@ import { Minus, Plus, Star } from "lucide-react";
 import { toast } from "sonner";
 import { ProductPlaceholder } from "@/components/shared/product-placeholder";
 import { WishlistButton } from "@/components/shared/wishlist-button";
+import { AddedToCartDialog, type AddedToCartItem } from "@/components/shop/added-to-cart-dialog";
 import { SizeGuideTable } from "@/components/shop/size-guide-table";
 import { siteConfig } from "@/lib/content";
 import { discountPercent, formatPrice, formatRating, toPersianDigits } from "@/lib/format";
@@ -36,6 +37,8 @@ export function ProductDetail({ product }: { product: ProductDetailDTO }) {
   const [imageIndex, setImageIndex] = useState(0);
   const [guideOpen, setGuideOpen] = useState(false);
   const [added, setAdded] = useState(false);
+  const [promptOpen, setPromptOpen] = useState(false);
+  const [addedItem, setAddedItem] = useState<AddedToCartItem | null>(null);
 
   const addItem = useCartStore((s) => s.addItem);
   const cartItems = useCartStore((s) => s.items);
@@ -91,8 +94,17 @@ export function ProductDetail({ product }: { product: ProductDetailDTO }) {
       quantity,
     );
     setAdded(true);
-    toast.success("به سبد خرید اضافه شد", { description: product.name });
-    if (quantity < qty) toast(`به‌دلیل محدودیت موجودی، ${toPersianDigits(quantity)} عدد اضافه شد.`);
+    // Ask what to do next instead of a toast that disappears on its own.
+    setAddedItem({
+      name: product.name,
+      image: gallery[0]?.url ?? null,
+      categorySlug: product.category.slug,
+      color: selectedVariant?.color?.name ?? selectedColor?.name ?? null,
+      size: selectedVariant?.size?.name ?? null,
+      quantity,
+      limited: quantity < qty,
+    });
+    setPromptOpen(true);
   }
 
   const sizeGuide = useMemo(() => {
@@ -300,6 +312,8 @@ export function ProductDetail({ product }: { product: ProductDetailDTO }) {
           ))}
         </div>
       </div>
+
+      <AddedToCartDialog item={addedItem} open={promptOpen} onOpenChange={setPromptOpen} />
     </section>
   );
 }
