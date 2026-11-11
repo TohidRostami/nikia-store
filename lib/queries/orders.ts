@@ -15,7 +15,10 @@ export type CustomerOrderSummary = {
  * verified session. Unpaid orders that were cancelled (abandoned checkouts)
  * are left out — they'd only be noise.
  */
-export async function getOrdersForCustomer(userId: string, take?: number): Promise<CustomerOrderSummary[]> {
+export async function getOrdersForCustomer(
+  userId: string,
+  take?: number,
+): Promise<CustomerOrderSummary[]> {
   const orders = await prisma.order.findMany({
     where: { userId, NOT: { status: "CANCELLED", paidAt: null } },
     include: { items: { select: { name: true, quantity: true } } },
@@ -35,7 +38,12 @@ export async function getOrdersForCustomer(userId: string, take?: number): Promi
 
 export async function getOrderCounts(userId: string) {
   const [active, delivered] = await Promise.all([
-    prisma.order.count({ where: { userId, status: { in: ["PENDING_PAYMENT", "PAID", "PROCESSING", "SHIPPED"] } } }),
+    prisma.order.count({
+      where: {
+        userId,
+        status: { in: ["PENDING_PAYMENT", "PAID", "PROCESSING", "SHIPPED"] },
+      },
+    }),
     prisma.order.count({ where: { userId, status: "DELIVERED" } }),
   ]);
   return { active, delivered };
@@ -48,6 +56,8 @@ export type CustomerOrderDetail = {
   subtotal: number;
   discountAmount: number;
   shippingCost: number;
+  /** POST | TIPAX (both پس‌کرایه); null for orders from before it was recorded. */
+  shippingMethod: string | null;
   total: number;
   paymentRefId: string | null;
   paidAt: Date | null;
@@ -78,7 +88,10 @@ export type CustomerOrderDetail = {
  * the query itself returns null for an order that belongs to someone else.
  * Never split this into "fetch by id, then check the owner".
  */
-export async function getOrderForCustomer(orderId: string, userId: string): Promise<CustomerOrderDetail | null> {
+export async function getOrderForCustomer(
+  orderId: string,
+  userId: string,
+): Promise<CustomerOrderDetail | null> {
   const order = await prisma.order.findFirst({
     where: { id: orderId, userId },
     include: {
@@ -86,8 +99,19 @@ export async function getOrderForCustomer(orderId: string, userId: string): Prom
       discountCode: { select: { code: true } },
       items: {
         include: {
-          product: { select: { slug: true, images: { take: 1, orderBy: { sortOrder: "asc" } } } },
-          variant: { include: { color: { include: { images: { take: 1, orderBy: { sortOrder: "asc" } } } } } },
+          product: {
+            select: {
+              slug: true,
+              images: { take: 1, orderBy: { sortOrder: "asc" } },
+            },
+          },
+          variant: {
+            include: {
+              color: {
+                include: { images: { take: 1, orderBy: { sortOrder: "asc" } } },
+              },
+            },
+          },
         },
       },
     },
@@ -101,6 +125,7 @@ export async function getOrderForCustomer(orderId: string, userId: string): Prom
     subtotal: order.subtotal,
     discountAmount: order.discountAmount,
     shippingCost: order.shippingCost,
+    shippingMethod: order.shippingMethod,
     total: order.total,
     paymentRefId: order.paymentRefId,
     paidAt: order.paidAt,
@@ -124,7 +149,8 @@ export async function getOrderForCustomer(orderId: string, userId: string): Prom
       price: i.price,
       quantity: i.quantity,
       productSlug: i.product?.slug ?? null,
-      image: i.variant?.color?.images[0]?.url ?? i.product?.images[0]?.url ?? null,
+      image:
+        i.variant?.color?.images[0]?.url ?? i.product?.images[0]?.url ?? null,
     })),
   };
 }

@@ -324,6 +324,9 @@ model Address {
   userId      String
   fullName    String
   phone       String
+  // Home phone with area code. Optional in the database so addresses saved
+  // before this field existed stay valid; the checkout form requires it.
+  landline    String?
   province    String
   city        String
   addressLine String
@@ -364,6 +367,9 @@ model Order {
   subtotal       Int
   discountAmount Int         @default(0)
   shippingCost   Int         @default(0)
+  // POST | TIPAX — both are پس‌کرایه (the customer pays the carrier on delivery),
+  // so shippingCost stays 0. Null for in-person sales and orders from before this existed.
+  shippingMethod String?
   total          Int
   discountCodeId String?
   // Gateway "authority"/token issued when the payment starts — how the

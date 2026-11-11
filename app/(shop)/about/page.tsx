@@ -29,7 +29,7 @@ export default function AboutPage() {
       <section className="wrap">
         <div className="relative aspect-[21/9] min-h-[clamp(160px,42vw,260px)] overflow-hidden rounded-lg">
           <Image
-            src={"/about-us.webp"}
+            src={"/nikia.webp"}
             alt="about us"
             fill
             sizes="(min-width: 1200px) 1100px, 100vw"

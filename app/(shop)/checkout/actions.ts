@@ -3,14 +3,20 @@
 import { prisma } from "@/lib/db";
 import { getSession } from "@/lib/session";
 import { createOrder } from "@/lib/orders/create-order";
+import type { ShippingMethodId } from "@/lib/shipping-methods";
 import { failPendingOrder, markOrderPaid } from "@/lib/orders/lifecycle";
 import { initiatePayment, isSimulatorEnabled } from "@/lib/payment";
 
-export type CheckoutItem = { productId: string; variantId: string; quantity: number };
+export type CheckoutItem = {
+  productId: string;
+  variantId: string;
+  quantity: number;
+};
 
 export type AddressFields = {
   fullName: string;
   phone: string;
+  landline: string;
   province: string;
   city: string;
   addressLine: string;
@@ -24,6 +30,7 @@ export type PlaceOrderResult =
 export async function placeOrder(
   items: CheckoutItem[],
   address: AddressFields,
+  shippingMethod: ShippingMethodId | null,
   discountCode?: string | null,
 ): Promise<PlaceOrderResult> {
   const session = await getSession();
@@ -33,6 +40,7 @@ export async function placeOrder(
     userId: session.user.id,
     items,
     address,
+    shippingMethod, // validated again inside createOrder — the browser is never trusted
     discountCode,
   });
   if (!created.ok) return { error: created.error };

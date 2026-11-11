@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, type ClipboardEvent, type KeyboardEvent } from "react";
-import { toLatinDigits } from "@/lib/format";
+import { toLatinDigits, toPersianDigits } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 /** One box per digit, LTR, with auto-advance, backspace and paste support. */
@@ -37,7 +37,9 @@ export function OtpInput({
 
   function onPaste(e: ClipboardEvent<HTMLInputElement>) {
     e.preventDefault();
-    const pasted = toLatinDigits(e.clipboardData.getData("text")).replace(/\D/g, "").slice(0, length);
+    const pasted = toLatinDigits(e.clipboardData.getData("text"))
+      .replace(/\D/g, "")
+      .slice(0, length);
     commit(pasted);
     refs.current[Math.min(pasted.length, length - 1)]?.focus();
   }
@@ -50,7 +52,7 @@ export function OtpInput({
           ref={(el) => {
             refs.current[i] = el;
           }}
-          value={d}
+          value={toPersianDigits(d)}
           inputMode="numeric"
           autoComplete={i === 0 ? "one-time-code" : "off"}
           maxLength={2}

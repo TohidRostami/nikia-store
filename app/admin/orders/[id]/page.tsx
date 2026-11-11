@@ -67,7 +67,10 @@ export default async function AdminOrderDetailPage({
             </div>
             {order.discountAmount > 0 && (
               <div className="flex justify-between text-muted-foreground">
-                <span>تخفیف{order.discountCodeText ? ` (${order.discountCodeText})` : ""}</span>
+                <span>
+                  تخفیف
+                  {order.discountCodeText ? ` (${order.discountCodeText})` : ""}
+                </span>
                 <span>−{formatPrice(order.discountAmount)}</span>
               </div>
             )}
@@ -89,18 +92,27 @@ export default async function AdminOrderDetailPage({
               <dl className="mt-3 flex flex-col gap-1.5 text-sm text-muted-foreground">
                 <div className="flex justify-between gap-3">
                   <dt>زمان پرداخت</dt>
-                  <dd className="text-foreground">{order.paidAt ? formatJalali(order.paidAt) : "پرداخت نشده"}</dd>
+                  <dd className="text-foreground">
+                    {order.paidAt ? formatJalali(order.paidAt) : "پرداخت نشده"}
+                  </dd>
                 </div>
                 {order.paymentRefId && (
                   <div className="flex justify-between gap-3">
                     <dt>کد پیگیری بانک</dt>
-                    <dd className="font-nums text-foreground">{order.paymentRefId}</dd>
+                    <dd className="font-nums text-foreground">
+                      {order.paymentRefId}
+                    </dd>
                   </div>
                 )}
                 {order.gatewayRef && (
                   <div className="flex justify-between gap-3">
                     <dt>شناسه درگاه</dt>
-                    <dd className="font-nums max-w-[60%] truncate text-foreground" title={order.gatewayRef}>{order.gatewayRef}</dd>
+                    <dd
+                      className="font-nums max-w-[60%] truncate text-foreground"
+                      title={order.gatewayRef}
+                    >
+                      {order.gatewayRef}
+                    </dd>
                   </div>
                 )}
               </dl>
@@ -135,6 +147,11 @@ export default async function AdminOrderDetailPage({
                 <span className="text-right" dir="ltr">
                   شماره تماس: {order.address.phone}
                 </span>
+                {order.address.landline && (
+                  <span className="text-right" dir="ltr">
+                    تلفن ثابت: {order.address.landline}
+                  </span>
+                )}
                 <span>
                   استان و شهر: {order.address.province}، {order.address.city}
                 </span>

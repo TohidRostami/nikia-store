@@ -1,13 +1,19 @@
 import { z } from "zod";
 import { prisma } from "@/lib/db";
-import { addressSchema } from "@/lib/address";
-import { evaluateDiscount, normalizeDiscountCode, type DiscountRow } from "@/lib/discount";
+import { checkoutAddressSchema } from "@/lib/address";
+import {
+  evaluateDiscount,
+  normalizeDiscountCode,
+  type DiscountRow,
+} from "@/lib/discount";
 import { syncProductInStock } from "@/lib/inventory";
 import { generateOrderNumber } from "@/lib/order-number";
-import { getSiteSettings } from "@/lib/queries/settings";
 import { expireStaleOrders, failPendingOrder } from "@/lib/orders/lifecycle";
 import { formatPrice } from "@/lib/format";
-import { calcShipping } from "@/lib/shipping";
+import {
+  SHIPPING_METHOD_IDS,
+  type ShippingMethodId,
+} from "@/lib/shipping-methods";
 import { MAX_LINE_QUANTITY } from "@/lib/product-constants";
 import { Prisma } from "@/lib/generated/prisma";
 
@@ -19,11 +25,20 @@ export const checkoutItemsSchema = z
     z.object({
       productId: z.string().min(1).max(64),
       variantId: z.string().min(1).max(64),
-      quantity: z.number().int("تعداد باید عدد صحیح باشد.").min(1).max(MAX_LINE_QUANTITY),
+      quantity: z
+        .number()
+        .int("تعداد باید عدد صحیح باشد.")
+        .min(1)
+        .max(MAX_LINE_QUANTITY),
     }),
   )
   .min(1, "سبد خرید خالی است.")
   .max(40);
+
+/** Required: the carrier has to be known to send the parcel. */
+export const shippingMethodSchema = z.enum(SHIPPING_METHOD_IDS, {
+  error: "روش ارسال را انتخاب کنید.",
+});
 
 export type CreatedOrder = {
   id: string;
@@ -43,7 +58,9 @@ class OrderError extends Error {}
  * Turns a cart into an unpaid order, atomically.
  *
  * Nothing the browser sends is trusted for money: prices, names, size and
- * color labels, shipping and the discount all come from the database.
+ * color labels and the discount all come from the database. Shipping is
+ * never charged here — both methods are پس‌کرایه, paid to the carrier on
+ * delivery — so the order total is the goods minus the discount.
  * Stock is reserved with a conditional decrement (`stock >= qty`), so two
  * checkouts can never both take the last unit; the reservation, discount
  * usage, address and order rows all commit together or not at all.
@@ -55,28 +72,60 @@ export async function createOrder(params: {
   userId: string;
   items: unknown;
   address: unknown;
+  shippingMethod: unknown;
   discountCode?: string | null;
 }): Promise<CreateOrderResult> {
   const itemsParsed = checkoutItemsSchema.safeParse(params.items);
   if (!itemsParsed.success) {
-    return { ok: false, error: itemsParsed.error.issues[0]?.message ?? "سبد خرید نامعتبر است." };
+    return {
+      ok: false,
+      error: itemsParsed.error.issues[0]?.message ?? "سبد خرید نامعتبر است.",
+    };
   }
-  const addressParsed = addressSchema.safeParse(params.address);
+  const addressParsed = checkoutAddressSchema.safeParse(params.address);
   if (!addressParsed.success) {
-    return { ok: false, error: addressParsed.error.issues[0]?.message ?? "آدرس نامعتبر است." };
+    return {
+      ok: false,
+      error: addressParsed.error.issues[0]?.message ?? "آدرس نامعتبر است.",
+    };
   }
   const address = addressParsed.data;
+  const methodParsed = shippingMethodSchema.safeParse(params.shippingMethod);
+  if (!methodParsed.success) {
+    // The checkout form never lets a customer pay without choosing a carrier, so a
+    // missing or unknown value here means the form and placeOrder are out of step —
+    // typically only some of the files were updated. Say so where a developer will see it.
+    console.warn(
+      `[createOrder] shippingMethod ${String(JSON.stringify(params.shippingMethod)).slice(0, 40)} was rejected. The form never sends this, ` +
+        "so app/(shop)/checkout/actions.ts and components/shop/checkout-flow.tsx are probably out of step — run `npm run typecheck`.",
+    );
+    return {
+      ok: false,
+      error:
+        methodParsed.error.issues[0]?.message ?? "روش ارسال را انتخاب کنید.",
+    };
+  }
+  const shippingMethod: ShippingMethodId = methodParsed.data;
 
   // The same variant sent twice must not slip past the per-line cap.
-  const merged = new Map<string, { productId: string; variantId: string; quantity: number }>();
+  const merged = new Map<
+    string,
+    { productId: string; variantId: string; quantity: number }
+  >();
   for (const item of itemsParsed.data) {
     const key = `${item.productId}:${item.variantId}`;
     const prev = merged.get(key);
-    merged.set(key, { ...item, quantity: (prev?.quantity ?? 0) + item.quantity });
+    merged.set(key, {
+      ...item,
+      quantity: (prev?.quantity ?? 0) + item.quantity,
+    });
   }
   const items = [...merged.values()];
   if (items.some((i) => i.quantity > MAX_LINE_QUANTITY)) {
-    return { ok: false, error: `حداکثر ${formatPrice(MAX_LINE_QUANTITY)} عدد از هر کالا را می‌توانید سفارش دهید.` };
+    return {
+      ok: false,
+      error: `حداکثر ${formatPrice(MAX_LINE_QUANTITY)} عدد از هر کالا را می‌توانید سفارش دهید.`,
+    };
   }
 
   // Unpaid orders past their window give their stock back before we try to
@@ -100,7 +149,11 @@ export async function createOrder(params: {
   for (const { id } of abandoned) await failPendingOrder(id).catch(() => false);
 
   const products = await prisma.product.findMany({
-    where: { id: { in: [...new Set(items.map((i) => i.productId))] }, isPublished: true, isArchived: false },
+    where: {
+      id: { in: [...new Set(items.map((i) => i.productId))] },
+      isPublished: true,
+      isArchived: false,
+    },
     include: { variants: { include: { size: true, color: true } } },
   });
   const productById = new Map(products.map((p) => [p.id, p]));
@@ -118,14 +171,20 @@ export async function createOrder(params: {
   for (const item of items) {
     const product = productById.get(item.productId);
     if (!product) {
-      return { ok: false, error: "یکی از محصولات سبد خرید دیگر در دسترس نیست." };
+      return {
+        ok: false,
+        error: "یکی از محصولات سبد خرید دیگر در دسترس نیست.",
+      };
     }
 
     let variant: (typeof product.variants)[number] | null = null;
     if (product.variants.length > 0) {
       variant = product.variants.find((v) => v.id === item.variantId) ?? null;
       if (!variant) {
-        return { ok: false, error: `گزینه‌ی انتخاب‌شده برای «${product.name}» دیگر موجود نیست.` };
+        return {
+          ok: false,
+          error: `گزینه‌ی انتخاب‌شده برای «${product.name}» دیگر موجود نیست.`,
+        };
       }
     } else if (item.variantId !== product.id) {
       // A product without variants uses its own id as the cart's placeholder variantId.
@@ -145,9 +204,9 @@ export async function createOrder(params: {
   }
 
   const subtotal = lines.reduce((sum, l) => sum + l.price * l.quantity, 0);
-  const settings = await getSiteSettings();
-  const shippingCost = calcShipping(subtotal, settings);
-  const codeText = params.discountCode ? normalizeDiscountCode(params.discountCode) : "";
+  const codeText = params.discountCode
+    ? normalizeDiscountCode(params.discountCode)
+    : "";
 
   const attempt = () =>
     prisma.$transaction(
@@ -157,7 +216,10 @@ export async function createOrder(params: {
           if (!line.variantId) continue;
           const reserved = await tx.productVariant.updateMany({
             where: { id: line.variantId, stock: { gte: line.quantity } },
-            data: { stock: { decrement: line.quantity }, version: { increment: 1 } },
+            data: {
+              stock: { decrement: line.quantity },
+              version: { increment: 1 },
+            },
           });
           if (reserved.count === 0) {
             throw new OrderError(`موجودی «${line.name}» کافی نیست.`);
@@ -173,7 +235,9 @@ export async function createOrder(params: {
         let discountAmount = 0;
         let discountCodeId: string | null = null;
         if (codeText) {
-          const row = await tx.discountCode.findUnique({ where: { code: codeText } });
+          const row = await tx.discountCode.findUnique({
+            where: { code: codeText },
+          });
           const result = evaluateDiscount(row as DiscountRow | null, subtotal);
           if (!result.valid) throw new OrderError(result.error);
           const consumed = await tx.discountCode.updateMany({
@@ -181,15 +245,19 @@ export async function createOrder(params: {
             data: { usedCount: { increment: 1 } },
           });
           if (consumed.count === 0) {
-            throw new OrderError("کد تخفیف هم‌زمان توسط کاربر دیگری استفاده شد؛ دوباره تلاش کنید.");
+            throw new OrderError(
+              "کد تخفیف هم‌زمان توسط کاربر دیگری استفاده شد؛ دوباره تلاش کنید.",
+            );
           }
           discountAmount = result.discountAmount;
           discountCodeId = result.id;
         }
 
-        const total = subtotal + shippingCost - discountAmount;
+        const total = subtotal - discountAmount;
         if (total < MIN_PAYABLE_TOMAN) {
-          throw new OrderError(`مبلغ قابل پرداخت باید حداقل ${formatPrice(MIN_PAYABLE_TOMAN)} تومان باشد.`);
+          throw new OrderError(
+            `مبلغ قابل پرداخت باید حداقل ${formatPrice(MIN_PAYABLE_TOMAN)} تومان باشد.`,
+          );
         }
 
         // 3) Address — reuse an identical saved one instead of piling up duplicates.
@@ -205,8 +273,12 @@ export async function createOrder(params: {
             await tx.address.create({
               data: {
                 ...addressData,
+                phone: address.phone ?? "",
                 userId: params.userId,
-                isDefault: (await tx.address.count({ where: { userId: params.userId } })) === 0,
+                isDefault:
+                  (await tx.address.count({
+                    where: { userId: params.userId },
+                  })) === 0,
               },
               select: { id: true },
             })
@@ -221,11 +293,17 @@ export async function createOrder(params: {
             subtotal,
             discountAmount,
             discountCodeId,
-            shippingCost,
+            shippingMethod,
+            shippingCost: 0, // پس‌کرایه — paid to the carrier on delivery, not online
             total,
             items: { create: lines },
           },
-          select: { id: true, orderNumber: true, total: true, user: { select: { name: true } } },
+          select: {
+            id: true,
+            orderNumber: true,
+            total: true,
+            user: { select: { name: true } },
+          },
         });
         return {
           id: order.id,
@@ -244,13 +322,18 @@ export async function createOrder(params: {
         return { ok: true, order: await attempt() };
       } catch (e) {
         const collision =
-          e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002" && i < 2;
+          e instanceof Prisma.PrismaClientKnownRequestError &&
+          e.code === "P2002" &&
+          i < 2;
         if (!collision) throw e;
       }
     }
   } catch (e) {
     if (e instanceof OrderError) return { ok: false, error: e.message };
     console.error("[createOrder] unexpected failure:", e);
-    return { ok: false, error: "ثبت سفارش با خطا مواجه شد. لطفاً دوباره تلاش کنید." };
+    return {
+      ok: false,
+      error: "ثبت سفارش با خطا مواجه شد. لطفاً دوباره تلاش کنید.",
+    };
   }
 }
