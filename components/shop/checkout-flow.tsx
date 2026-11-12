@@ -101,8 +101,8 @@ const DIGIT_FIELDS: CheckoutField[] = [
 /** The validated (Latin-digit, trimmed) address in the shape the server action takes. */
 function toAddressFields(d: {
   fullName: string;
-  phone?: string;
-  landline: string;
+  phone: string;
+  landline?: string;
   province: string;
   city: string;
   postalCode: string;
@@ -110,8 +110,8 @@ function toAddressFields(d: {
 }) {
   return {
     fullName: d.fullName,
-    phone: d.phone ?? "",
-    landline: d.landline,
+    phone: d.phone,
+    landline: d.landline ?? "",
     province: d.province,
     city: d.city,
     postalCode: d.postalCode,
@@ -258,7 +258,7 @@ export function CheckoutFlow({
     setForm({
       fullName: d.fullName,
       phone: withPersianDigits(d.phone ?? ""),
-      landline: withPersianDigits(d.landline),
+      landline: withPersianDigits(d.landline ?? ""),
       province: d.province,
       city: d.city,
       postalCode: withPersianDigits(d.postalCode),
@@ -461,7 +461,7 @@ export function CheckoutFlow({
                 </Field>
 
                 <Field
-                  label="تلفن ثابت (با کد شهر)"
+                  label="تلفن ثابت (اختیاری، با کد شهر)"
                   htmlFor="ck-landline"
                   error={visible("landline")}
                 >

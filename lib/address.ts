@@ -149,22 +149,23 @@ export const checkoutAddressSchema = addressSchema
         .regex(
           MOBILE_PATTERN,
           "شماره موبایل معتبر نیست؛ باید با ۰۹ شروع شود و ۱۱ رقم باشد (مثال: ۰۹۱۲۳۴۵۶۷۸۹).",
-        )
-        .optional(),
+        ),
     ),
+    // Optional: left empty it is simply not saved (undefined → NULL in the database).
+    // But anything that IS typed must be a real landline, not a mobile number or a typo.
     landline: z.preprocess(
       phoneText,
       z
         .string()
-        .min(1, "شماره تلفن ثابت را وارد کنید.")
         .refine(
           (v) => !v.startsWith("09"),
           "این شماره موبایل است؛ تلفن ثابت را همراه با کد شهر وارد کنید (مثال: ۰۲۱۸۸۱۲۳۴۵۶).",
         )
-        .regex(
-          LANDLINE_PATTERN,
+        .refine(
+          (v) => v === "" || LANDLINE_PATTERN.test(v),
           "تلفن ثابت را همراه با کد شهر و فقط با رقم وارد کنید (مثال: ۰۲۱۸۸۱۲۳۴۵۶).",
-        ),
+        )
+        .transform((v) => (v === "" ? undefined : v)),
     ),
     province: z.preprocess(
       text,

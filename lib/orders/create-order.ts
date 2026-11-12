@@ -264,7 +264,13 @@ export async function createOrder(params: {
         const { isDefault: _ignored, ...addressData } = address;
         void _ignored;
         const existing = await tx.address.findFirst({
-          where: { userId: params.userId, ...addressData },
+          // `landline ?? null`: a missing landline must match only a saved address that has none
+          // (an undefined filter would be ignored and match one that does).
+          where: {
+            userId: params.userId,
+            ...addressData,
+            landline: addressData.landline ?? null,
+          },
           select: { id: true },
         });
         const addressId =
@@ -273,7 +279,6 @@ export async function createOrder(params: {
             await tx.address.create({
               data: {
                 ...addressData,
-                phone: address.phone ?? "",
                 userId: params.userId,
                 isDefault:
                   (await tx.address.count({
